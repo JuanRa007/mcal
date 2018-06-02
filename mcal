@@ -136,7 +136,7 @@ f_ayuda (){
 #------------------------------------------------------------------------------#
 # Función Determina primer parámetro.
 #------------------------------------------------------------------------------#
- f_determina_mes () {
+ f_determina_mes_ano () {
 
     if [ -n $PARAM ]
     then
@@ -171,22 +171,23 @@ f_inicializar;
 # Determinamos cuántos parámetros me pasan.
 case $# in
 
-#   No hay parámetros--> mes y año actuales.
+    # No hay parámetros--> mes y año actuales.
     0) 
         MES=$MES_HOY;
         ANO=$ANO_HOY;;
 
-#   Un parámetros--> o es un mes, o es un año o es -help.
+    # Un parámetros--> o es un mes, o es un año o es -help.
     1)
-#       ¿me pide ayuda?
+    # ¿me pide ayuda?
         if [ $1 = $AYUDA ]
         then
             f_ayuda
             exit 0;
-#       entonces puede ser un mes.
+#       entonces puede ser un mes o ano.
         else
+            # 
             PARAM=$1;
-            f_determina_mes
+            f_determina_mes_ano
 
             if [ $? = $ERR_NOPARAM ]
             then
