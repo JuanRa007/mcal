@@ -80,10 +80,10 @@ f_ayuda (){
 
     # Literales posibles para los meses, tanto en español como en inglés.
     # Abreviado y largo.
-    # Español
+    # --> Español
     MESES_ES_L="enero febrero marzo abril mayo junio julio agosto septiembre noviembre diciembre"
     MESES_ES_C="ene feb mar abr may jun jul ago sep nov dic"
-    # Inglés
+    # --> Inglés
     MESES_IN_L="january february march april may june july august september october november december"
     MESES_IN_C="jan feb mar apr may jun jul aug sep oct nov dec"
 
@@ -95,7 +95,7 @@ f_ayuda (){
     do
         if [ $PARAM = $mesbase ]
         then
-            # Encontrado, luego nos vamos con OK.
+            # Encontrado, entonces nos vamos con OK.
             return 0;
         fi
     done
@@ -104,7 +104,7 @@ f_ayuda (){
     do
         if [ $PARAM = $mesbase ]
         then
-            # Encontrado, luego nos vamos con OK.
+            # Encontrado, entonces nos vamos con OK.
             return 0;
         fi
     done
@@ -113,7 +113,7 @@ f_ayuda (){
     do
         if [ $PARAM = $mesbase ]
         then
-            # Encontrado, luego nos vamos con OK.
+            # Encontrado, entonces nos vamos con OK.
             return 0;
         fi
     done
@@ -122,12 +122,13 @@ f_ayuda (){
     do
         if [ $PARAM = $mesbase ]
         then
-            # Encontrado, luego nos vamos con OK.
+            # Encontrado, entonces nos vamos con OK.
             return 0;
         fi
     done
 
-    # No lo he encontrado, luego nos vamos con NO OK (error).
+    # Solo pasará por aquí cuando no lo encuentre.
+    # NO Encontrado, entonces nos vamos con NO OK (error).
     return 1;
 
  } # fin f_busca_mes
@@ -138,14 +139,54 @@ f_ayuda (){
 #------------------------------------------------------------------------------#
  f_determina_mes_ano () {
 
+    # Primero comprobamos que no viene vacío.
     if [ -n $PARAM ]
     then
 
-        f_busca_mes_lit
-        if [ $? = 0 ]
-        then
-            MES=$PARAM;
-            ANO=$ANO_HOY;
+        # Primero determinamos si es un número o literal.
+        if [ $PARAM = `[0-9]` ]; then
+
+            # Es número: puede ser un mes. Lo comprobamos.
+            if [ $PARAM -gt 0 ] && [ $PARAM -lt 13 ]; then
+
+                # Lo tratamos como mes.
+                MES=$PARAM;
+                ANO=$ANO_HOY;
+
+            else
+
+                # Si es mayor de 12, entonces en un año.
+                if [ $PARAM -gt 12 ]; then
+
+                    # Lo tratamos como año.
+                    MES=$MES_HOY;
+                    ANO=$PARAM;
+
+                else
+
+                    # El año cero no se representa y damos error.
+                    return $ERR_ANOCERO;
+
+                fi
+
+            fi
+
+        else
+
+            # Son carácteres: puede ser un mes en literal.
+            f_busca_mes_lit
+
+            if [ $? = 0 ]; then
+
+                MES=$PARAM;
+                ANO=$ANO_HOY;
+            else
+
+                # No lo ha encontrado, por lo que daremos un error.
+                return $ERR_NOMESLIT;
+
+            fi
+
         fi
 
     else
@@ -173,40 +214,66 @@ case $# in
 
     # No hay parámetros--> mes y año actuales.
     0) 
+
+        # presentamos el mes / año actual.
         MES=$MES_HOY;
         ANO=$ANO_HOY;;
 
     # Un parámetros--> o es un mes, o es un año o es -help.
     1)
-    # ¿me pide ayuda?
-        if [ $1 = $AYUDA ]
-        then
+
+        # ¿es ayuda?
+        if [ $1 = $AYUDA ]; then
+
+            # presentamos la ayuda del comando y nos vamos.
             f_ayuda
             exit 0;
-#       entonces puede ser un mes o ano.
-        else
-            # 
-            PARAM=$1;
-            f_determina_mes_ano
 
-            if [ $? = $ERR_NOPARAM ]
-            then
+        # entonces puede ser un mes o ano.
+        else
+
+            # pasamos el valor del parámetro a la variable que mirará la función.
+            PARAM=$1;
+            f_determina_mes_ano;
+
+            # Si devolvemos un error, avisamos y nos vamos.
+            if [ $? != 0 ]; then
                 echo "El valor previo de la función es: $?"
                 echo
                 echo
+                exit 1;
+
             fi
+
         fi;;
 
 #   Dos parámetros--> es un mes y es un año.
     2)
 #       El primero será el mes.
         PARAM=$1;
-        f_determina_mes
+        f_determina_mes_ano
+
+        # Si devolvemos un error, avisamos y nos vamos.
+        if [ $? != 0 ]; then
+            echo "El valor previo de la función es: $?"
+            echo
+            echo
+            exit 1;
+
+        fi
 
 #       El segundo será el año.
         PARAM=$2;
-        f_determina_ano;;
+        f_determina_mes_ano;
 
+        # Si devolvemos un error, avisamos y nos vamos.
+        if [ $? != 0 ]; then
+            echo "El valor previo de la función es: $?"
+            echo
+            echo
+            exit 1;
+
+        fi
 
 #   Tres o más parámetros, es un error.
     *)
