@@ -18,10 +18,14 @@
 MISCRIPT=`basename $0`      # Nombre del script sin path 
 AYUDA="-help"               # Parámetro para solicitar ayuda
 P_MES="-m"                  # Parámetro para incluir meses en literal
+ES_NUM='^[0-9]+$'
 ERR_NOPARAM=21              # El parámetro pasado no es correcto.
+ERR_ANOCERO=22
+ERR_NOMESLIT=23
 
 
 # Variables globales
+HAY_ERROR=0
 MES=0                       # Mes a presentar
 ANO=0                       # Año a presentar
 MES_HOY=0                   # Mes a día de hoy
@@ -144,7 +148,7 @@ f_ayuda (){
     then
 
         # Primero determinamos si es un número o literal.
-        if [ $PARAM = `[0-9]` ]; then
+        if [[ $PARAM =~ $ES_NUM ]]; then
 
             # Es número: puede ser un mes. Lo comprobamos.
             if [ $PARAM -gt 0 ] && [ $PARAM -lt 13 ]; then
@@ -262,6 +266,8 @@ case $# in
 
         fi
 
+        MES_BUENO=$MES
+
 #       El segundo será el año.
         PARAM=$2;
         f_determina_mes_ano;
@@ -273,7 +279,9 @@ case $# in
             echo
             exit 1;
 
-        fi
+        fi;
+
+        MES=$MES_BUENO;;
 
 #   Tres o más parámetros, es un error.
     *)
