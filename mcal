@@ -15,22 +15,24 @@
 #------------------------------------------------------------------------------#
 
 # Constantes
-MISCRIPT=`basename $0`      # Nombre del script sin path 
-AYUDA="-help"               # Parámetro para solicitar ayuda
-P_MES="-m"                  # Parámetro para incluir meses en literal
-ES_NUM='^[0-9]+$'
-ERR_NOPARAM=21              # El parámetro pasado no es correcto.
-ERR_ANOCERO=22
-ERR_NOMESLIT=23
+MISCRIPT=`basename $0`  # Nombre del script sin path 
+AYUDA="-help"           # Parámetro para solicitar ayuda
+P_MES="-m"              # Parámetro para incluir meses en literal
+ES_NUM='^[0-9]+$'       # Cadena para determinar si el parámetro es número o cadena.
+
+# Control de errores
+COD_ERROR=0             # Código de error generado por el comando.
+ERR_NOPARAM=21          # El parámetro pasado no es correcto.
+ERR_ANOCERO=22          # Un año con valor cero no se permite.
+ERR_NOMESLIT=23         # El literal usado no existe.
 
 
 # Variables globales
-HAY_ERROR=0
-MES=0                       # Mes a presentar
-ANO=0                       # Año a presentar
-MES_HOY=0                   # Mes a día de hoy
-ANO_HOY=0                   # Año a día de hoy
-PARAM=""                    # Parámetro a comprobar
+MES=""                  # Mes a presentar
+ANO=""                  # Año a presentar
+MES_HOY=0               # Mes a día de hoy
+ANO_HOY=0               # Año a día de hoy
+PARAM=""                # Parámetro a comprobar
 
 
 #------------------------------------------------------------------------------#
@@ -69,6 +71,7 @@ f_ayuda (){
     echo "      $0 -help    Muestra esta ayuda."
     echo "      $0 jan      Presentará el mes enero (january en inglés), y el año actual."
     echo "      $0 10 2017  Presentará el mes octubre del año 2017."
+    echo "      $0 2017     Presentará el calendario completo del año 2017."
     echo
     echo
 
@@ -143,7 +146,10 @@ f_ayuda (){
 #------------------------------------------------------------------------------#
  f_determina_mes_ano () {
 
-    # Primero comprobamos que no viene vacío.
+    # Por defecto, no hay error.
+    COD_ERROR=0;
+
+    # Primero comprobamos que no viene vacío. Solo por controlar un poco más.
     if [ -n $PARAM ]
     then
 
@@ -155,20 +161,21 @@ f_ayuda (){
 
                 # Lo tratamos como mes.
                 MES=$PARAM;
-                ANO=$ANO_HOY;
+#######                ANO=$ANO_HOY;
 
             else
 
                 # Si es mayor de 12, entonces en un año.
-                if [ $PARAM -gt 12 ]; then
+                if [ $PARAM -gt 12 ] && [ $PARAM -le 9999 ]; then
 
                     # Lo tratamos como año.
-                    MES=$MES_HOY;
+#######                    MES=$MES_HOY;
                     ANO=$PARAM;
 
                 else
 
                     # El año cero no se representa y damos error.
+                    COD_ERROR=$ERR_ANOCERO;
                     return $ERR_ANOCERO;
 
                 fi
@@ -183,10 +190,12 @@ f_ayuda (){
             if [ $? = 0 ]; then
 
                 MES=$PARAM;
-                ANO=$ANO_HOY;
+#######                ANO=$ANO_HOY;
+
             else
 
                 # No lo ha encontrado, por lo que daremos un error.
+                COD_ERROR=$ERR_NOMESLIT;
                 return $ERR_NOMESLIT;
 
             fi
@@ -194,12 +203,71 @@ f_ayuda (){
         fi
 
     else
+
+        # Este error no se debería de dar pero lo controlamos.
+        COD_ERROR=$ERR_NOPARAM;
         return $ERR_NOPARAM;
+
     fi
 
 
  } # fin f_determina_mes
 
+
+#------------------------------------------------------------------------------#
+# Función Salimos presentando el error encontrado.
+#------------------------------------------------------------------------------#
+ f_presentar_error () {
+
+     # Texto a presentar con el error.
+     LIT_MENSA="";
+
+# Control de errores
+ERR_NOMESLIT=23         # El literal usado no existe.
+
+    case $COD_ERROR in
+
+        ERR_NOPARAM)
+
+            LIT_MENSA="ERROR: El parámetro usado no es correcto.\nPuede obtener ayuda mediante el comando -help.";;
+
+        ERR_ANOCERO)
+
+            LIT_MENSA="ERROR: El año con valor cero o superior a 9999 no se permite.'\n'Puede obtener ayuda mediante el comando -help.";;
+
+        ERR_NOMESLIT)
+
+            LIT_MENSA="ERROR: El literal usado para el mes no se encuentra.\nPuede obtener ayuda mediante el comando -help.";;
+
+        *)
+
+            LIT_MENSA="ERROR: Un error desconocido.\nPuede obtener ayuda mediante el comando -help.";;
+
+    esac
+
+    # Nos salimos con error.
+    echo
+    echo $LIT_MENSA;
+    echo
+    exit 1;
+
+} # fin f_presentar_error
+
+
+#------------------------------------------------------------------------------#
+# Función Ejecuta el comando con los parámetros elegidos.
+#------------------------------------------------------------------------------#
+ f_ejecutar_comando () {
+
+
+    # Una vez controlados los parámetros, llegaremos aquí ya con
+    # las variables "LIT_MES" "MES" "ANO" correctamente informadas.
+    # Llamamos al comando con los parámetros.
+    cal $LIT_MES $MES $ANO
+    echo
+    exit 0;
+
+ } # fin f_ejecutar_comando
 
 
 ##----------------------------------------------------------------------------##
@@ -220,8 +288,7 @@ case $# in
     0) 
 
         # presentamos el mes / año actual.
-        MES=$MES_HOY;
-        ANO=$ANO_HOY;;
+        f_ejecutar_comando;;
 
     # Un parámetros--> o es un mes, o es un año o es -help.
     1)
@@ -242,10 +309,9 @@ case $# in
 
             # Si devolvemos un error, avisamos y nos vamos.
             if [ $? != 0 ]; then
-                echo "El valor previo de la función es: $?"
-                echo
-                echo
-                exit 1;
+                
+                # Mostramos el error al salir.
+                f_presentar_error;
 
             fi
 
@@ -293,10 +359,5 @@ case $# in
 
 esac
 
-# Una vez controlados los parámetros, llegaremos aquí ya con
-# las variables "LIT_MES" "MES" "ANO" correctamente informadas.
-# Llamamos al comando con los parámetros.
-cal $LIT_MES $MES $ANO
-echo
 #
 #end.
