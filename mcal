@@ -15,24 +15,27 @@
 #------------------------------------------------------------------------------#
 
 # Constantes
-MISCRIPT=`basename $0`  # Nombre del script sin path 
-AYUDA="-help"           # Parámetro para solicitar ayuda
-P_MES="-m"              # Parámetro para incluir meses en literal
+MISCRIPT=`basename $0`  # Nombre del script sin path.
+AYUDA="-help"           # Parámetro para solicitar ayuda.
+AYUDA1="--help"         #           para solicitar ayuda también.
+PARAM_MES="-m"          # Parámetro del comando "cal" para meses como textos.
 ES_NUM='^[0-9]+$'       # Cadena para determinar si el parámetro es número o cadena.
 
 # Control de errores
 COD_ERROR=0             # Código de error generado por el comando.
 ERR_NOPARAM=21          # El parámetro pasado no es correcto.
-ERR_ANOCERO=22          # Un año con valor cero no se permite.
+ERR_ANOMALO=22          # Un año con valor cero no se permite.
 ERR_NOMESLIT=23         # El literal usado no existe.
 
 
 # Variables globales
-MES=""                  # Mes a presentar
-ANO=""                  # Año a presentar
-MES_HOY=0               # Mes a día de hoy
-ANO_HOY=0               # Año a día de hoy
-PARAM=""                # Parámetro a comprobar
+LIT_MES=""              # Parámetro orden "cal" con meses en texto.
+MES=""                  # Mes a presentar.
+ANO=""                  # Año a presentar.
+MES_HOY=0               # Mes a día de hoy.
+ANO_HOY=0               # Año a día de hoy.
+PARAM=""                # Parámetro a comprobar.
+NUPARAM=0               # Número de parámetros. Usada en función "f_determina_mes_ano".
 
 
 #------------------------------------------------------------------------------#
@@ -42,6 +45,7 @@ PARAM=""                # Parámetro a comprobar
 #------------------------------------------------------------------------------#
 f_inicializar (){
 
+    # Obtenemos el mes y el año del sistema.
     MES_HOY=`date +%m`
     ANO_HOY=`date +%Y`
 
@@ -57,13 +61,15 @@ f_ayuda (){
 
     echo
     echo "AYUDA DEL COMANDO MCAL:"
+    echo "======================="
     echo
-    echo "  ${MISCRIPT}: calendario actualizado."
+    echo "  ${MISCRIPT}: comando 'cal' mejorado."
     echo
     echo "  Uso: $0 [mes] [año]"
     echo
     echo "  donde:"
-    echo "      - [mes] respesentado entre [1..12] o [ene..dic] o [enero..diciembre]."
+    echo "      - [mes] respesentado entre [1..12] o [ene..dic] o [enero..diciembre]"
+    echo "                                           [jan..dec] o [january..december]."
     echo "      - [año] representado entre [1..9999]."
     echo
     echo "  Por ejemplo:"
@@ -161,7 +167,14 @@ f_ayuda (){
 
                 # Lo tratamos como mes.
                 MES=$PARAM;
-#######                ANO=$ANO_HOY;
+
+                # Si solo tengo un parámetro, es un mes y tengo que añadir el año actual.
+                if [ $NUPARAM = 1 ]; then
+
+                    # Añadimos el año actual.
+                    ANO=$ANO_HOY;
+
+                fi
 
             else
 
@@ -169,14 +182,13 @@ f_ayuda (){
                 if [ $PARAM -gt 12 ] && [ $PARAM -le 9999 ]; then
 
                     # Lo tratamos como año.
-#######                    MES=$MES_HOY;
                     ANO=$PARAM;
 
                 else
 
                     # El año cero no se representa y damos error.
-                    COD_ERROR=$ERR_ANOCERO;
-                    return $ERR_ANOCERO;
+                    COD_ERROR=$ERR_ANOMALO;
+                    return $ERR_ANOMALO;
 
                 fi
 
@@ -184,13 +196,17 @@ f_ayuda (){
 
         else
 
-            # Son carácteres: puede ser un mes en literal.
+            # Son carácteres: puede ser un mes en literal. Lo buscamos.
             f_busca_mes_lit
 
+            # Si lo hemos encontrado (error=0)
             if [ $? = 0 ]; then
 
+                # Lo tratamos como mes.
                 MES=$PARAM;
-#######                ANO=$ANO_HOY;
+                # Para ejecutar el comando "cal" con meses en textos,
+                # se les antepone el parámetro "-m".
+                LIT_MES=$PARAM_MES;
 
             else
 
@@ -221,33 +237,39 @@ f_ayuda (){
 
      # Texto a presentar con el error.
      LIT_MENSA="";
+     LIT_MENSA_FIN="Puede obtener ayuda del uso correcto del comando, tecleando 'mcal -help'.";
 
-# Control de errores
-ERR_NOMESLIT=23         # El literal usado no existe.
-
+    # Control de errores
     case $COD_ERROR in
 
-        ERR_NOPARAM)
+        $ERR_NOPARAM)
 
-            LIT_MENSA="ERROR: El parámetro usado no es correcto.\nPuede obtener ayuda mediante el comando -help.";;
+            LIT_MENSA="ERROR: El parámetro usado no es correcto.";;
 
-        ERR_ANOCERO)
+        $ERR_ANOMALO)
 
-            LIT_MENSA="ERROR: El año con valor cero o superior a 9999 no se permite.'\n'Puede obtener ayuda mediante el comando -help.";;
+            LIT_MENSA="ERROR: No se permite para el año un valor cero o superior a 9999.";;
 
-        ERR_NOMESLIT)
+        $ERR_NOMESLIT)
 
-            LIT_MENSA="ERROR: El literal usado para el mes no se encuentra.\nPuede obtener ayuda mediante el comando -help.";;
+            LIT_MENSA="ERROR: El literal usado para representar el mes no es correcto.";;
 
         *)
 
-            LIT_MENSA="ERROR: Un error desconocido.\nPuede obtener ayuda mediante el comando -help.";;
+            LIT_MENSA="ERROR: Error desconocido o no determinado.";;
 
     esac
 
     # Nos salimos con error.
     echo
+    echo "AYUDA DEL COMANDO MCAL:"
+    echo "======================="
+    echo
+    echo "  ${MISCRIPT}: comando 'cal' mejorado."
+    echo
+    echo
     echo $LIT_MENSA;
+    echo $LIT_MENSA_FIN;
     echo
     exit 1;
 
@@ -294,7 +316,7 @@ case $# in
     1)
 
         # ¿es ayuda?
-        if [ $1 = $AYUDA ]; then
+        if [ $1 = $AYUDA ] || [ $1 = $AYUDA1 ]; then
 
             # presentamos la ayuda del comando y nos vamos.
             f_ayuda
@@ -305,6 +327,7 @@ case $# in
 
             # pasamos el valor del parámetro a la variable que mirará la función.
             PARAM=$1;
+            NUPARAM=1;
             f_determina_mes_ano;
 
             # Si devolvemos un error, avisamos y nos vamos.
@@ -313,7 +336,10 @@ case $# in
                 # Mostramos el error al salir.
                 f_presentar_error;
 
-            fi
+            fi;
+
+            # Todo ha ido bien, ejecutamos el comando.
+            f_ejecutar_comando;
 
         fi;;
 
@@ -325,14 +351,13 @@ case $# in
 
         # Si devolvemos un error, avisamos y nos vamos.
         if [ $? != 0 ]; then
-            echo "El valor previo de la función es: $?"
-            echo
-            echo
-            exit 1;
+
+            # Mostramos el error al salir.
+            f_presentar_error;
 
         fi
 
-        MES_BUENO=$MES
+#######        MES_BUENO=$MES
 
 #       El segundo será el año.
         PARAM=$2;
@@ -340,14 +365,16 @@ case $# in
 
         # Si devolvemos un error, avisamos y nos vamos.
         if [ $? != 0 ]; then
-            echo "El valor previo de la función es: $?"
-            echo
-            echo
-            exit 1;
+
+            # Mostramos el error al salir.
+            f_presentar_error;
 
         fi;
 
-        MES=$MES_BUENO;;
+#######        MES=$MES_BUENO;
+
+        # Todo ha ido bien, ejecutamos el comando.
+        f_ejecutar_comando;;
 
 #   Tres o más parámetros, es un error.
     *)
