@@ -49,6 +49,9 @@ f_inicializar (){
     MES_HOY=`date +%m`
     ANO_HOY=`date +%Y`
 
+    # Por defecto no se cuántos parámetros de dan.
+    NUPARAM=0;
+
 } # fin f_inicializar
 
 
@@ -167,14 +170,6 @@ f_ayuda (){
 
                 # Lo tratamos como mes.
                 MES=$PARAM;
-
-                # Si solo tengo un parámetro, es un mes y tengo que añadir el año actual.
-                if [ $NUPARAM = 1 ]; then
-
-                    # Añadimos el año actual.
-                    ANO=$ANO_HOY;
-
-                fi
 
             else
 
@@ -345,6 +340,9 @@ case $# in
 
 #   Dos parámetros--> es un mes y es un año.
     2)
+
+        # Dos parámetros.
+        NUPARAM=2;
 #       El primero será el mes.
         PARAM=$1;
         f_determina_mes_ano
