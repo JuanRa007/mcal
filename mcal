@@ -10,7 +10,7 @@
 # Ejercicio P2P 6.5 - Curso Miríadax: programación shell.
 #
 # Autor: JuanRa Hortal
-# Derechos de autor.
+# 
 #
 #------------------------------------------------------------------------------#
 
@@ -81,6 +81,8 @@ f_ayuda (){
     echo "      $0 jan      Presentará el mes enero (january en inglés), y el año actual."
     echo "      $0 10 2017  Presentará el mes octubre del año 2017."
     echo "      $0 2017     Presentará el calendario completo del año 2017."
+    echo "      $0 13       Presentará el calendario completo del año 13."
+    echo "      $0 [1..12]  Presentará el calendario del mes indicado para el año actual."
     echo
     echo
 
@@ -95,13 +97,10 @@ f_ayuda (){
  f_busca_mes_lit () {
 
     # Literales posibles para los meses, tanto en español como en inglés.
-    # Abreviado y largo.
     # --> Español
     MESES_ES_L="enero febrero marzo abril mayo junio julio agosto septiembre noviembre diciembre"
-    MESES_ES_C="ene feb mar abr may jun jul ago sep nov dic"
     # --> Inglés
     MESES_IN_L="january february march april may june july august september october november december"
-    MESES_IN_C="jan feb mar apr may jun jul aug sep oct nov dec"
 
     # Pasamos a minúsculas el parámetro antes de buscarlo.
     PARAM=`echo $PARAM | tr [:upper:] [:lower:]`;
@@ -109,7 +108,8 @@ f_ayuda (){
     # Empezamos a buscar el literal pasado en $PARAM. Si lo encontramos, nos vamos devolviendo un cero.
     for mesbase in $MESES_ES_L
     do
-        if [ $PARAM = $mesbase ]
+        # Buscamos todo el literal del mes o solo los tres primeros caracteres.
+        if [ $PARAM = $mesbase ] || [ $PARAM = ${mesbase:0:3} ]
         then
             # Encontrado, entonces nos vamos con OK.
             return 0;
@@ -118,25 +118,8 @@ f_ayuda (){
 
     for mesbase in $MESES_IN_L
     do
-        if [ $PARAM = $mesbase ]
-        then
-            # Encontrado, entonces nos vamos con OK.
-            return 0;
-        fi
-    done
-
-    for mesbase in $MESES_ES_C
-    do
-        if [ $PARAM = $mesbase ]
-        then
-            # Encontrado, entonces nos vamos con OK.
-            return 0;
-        fi
-    done
-
-    for mesbase in $MESES_IN_C
-    do
-        if [ $PARAM = $mesbase ]
+        # Buscamos todo el literal del mes o solo los tres primeros caracteres.
+        if [ $PARAM = $mesbase ] || [ $PARAM = ${mesbase:0:3} ]
         then
             # Encontrado, entonces nos vamos con OK.
             return 0;
@@ -170,6 +153,13 @@ f_ayuda (){
 
                 # Lo tratamos como mes.
                 MES=$PARAM;
+
+                # Si la función se llama cuando nos pasan dos parámetros.
+                if [ $NUPARAM = 1 ]; then
+                    ANO=$ANO_HOY
+                else
+                    ANO=$PARAM;
+                fi
 
             else
 
@@ -279,8 +269,14 @@ f_ayuda (){
 
     # Una vez controlados los parámetros, llegaremos aquí ya con
     # las variables "LIT_MES" "MES" "ANO" correctamente informadas.
-    # Llamamos al comando con los parámetros.
+    # Llamamos al comando con esos parámetros.
+
+
+    #echo "Literal: [${LIT_MES}]"
+    #echo "Mes    : [${MES}]"
+    #echo "Año    : [${ANO}]"
     cal $LIT_MES $MES $ANO
+
     echo
     exit 0;
 
@@ -355,7 +351,8 @@ case $# in
 
         fi
 
-#######        MES_BUENO=$MES
+        # Primer parámetro, me lo guardo.
+        MES_BUENO=$MES
 
 #       El segundo será el año.
         PARAM=$2;
@@ -369,7 +366,8 @@ case $# in
 
         fi;
 
-#######        MES=$MES_BUENO;
+        # Actualizamos el valor previamente guardado.
+        MES=$MES_BUENO;
 
         # Todo ha ido bien, ejecutamos el comando.
         f_ejecutar_comando;;
