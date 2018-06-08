@@ -1,9 +1,7 @@
-# mcal
+mcal: calendario actualizado. <h1>
 
-#mcal: calendario actualizado. <h1>
-
-##Comando mejorado de la orden 'bash' cal, la cual presenta un calendario en función <h2>
-##  de los parámtros pasado. <h2>
+Comando mejorado de la orden 'bash' cal, la cual presenta un calendario en función <h2>
+  de los parámtros pasado. <h2>
 
 Uso: **mcal** *[mes] [año]*
 
@@ -13,7 +11,7 @@ Uso: **mcal** *[mes] [año]*
       - [año] representado entre [1..9999].
 
   Por ejemplo:
-  
+
       mcal          Presentará el mes y año actual.
       mcal -help    Muestra esta ayuda.
       mcal jan      Presentará el mes enero (january en inglés), y el año actual.
