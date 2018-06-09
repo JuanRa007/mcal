@@ -1,6 +1,6 @@
 # mcal: orden 'cal' mejorada. <h1>
 
-Comando mejorado de la orden 'bash' cal, la cual presenta un calendario en función
+Comando mejorado de la orden '*bash*' **cal**, la cual presenta un calendario en función
 de los parámtros pasados.
 
 Uso: **mcal** *[mes] [año]*
